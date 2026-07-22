@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import ChapterAccordion from "../components/ChapterAccordion.jsx";
+import ChapterAccordion from "../component/ChapterAccordion.jsx";
 
 const CourseDetail = () => {
   const { id } = useParams();
