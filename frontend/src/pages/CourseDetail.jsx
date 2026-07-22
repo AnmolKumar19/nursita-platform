@@ -14,13 +14,17 @@ const CourseDetail = () => {
   const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
-    api.get(`/courses/${id}`).then((res) => setCourse(res.data));
-    api.get(`/classes/course/${id}`).then((res) => setClasses(res.data));
-    api.get(`/notes/course/${id}`).then((res) => setNotes(res.data));
-    if (user?.role === "student") {
-      api.get(`/enrollments/check/${id}`).then((res) => setEnrolled(res.data.enrolled));
-    }
-  }, [id, user]);
+    // FIX: Extract course and isEnrolled from the new backend response wrapper
+    api.get(`/courses/${id}`).then((res) => {
+      setCourse(res.data.course);
+      setEnrolled(res.data.isEnrolled);
+    }).catch((err) => {
+      console.error("Failed to load course details", err);
+    });
+
+    api.get(`/classes/course/${id}`).then((res) => setClasses(res.data)).catch(() => {});
+    api.get(`/notes/course/${id}`).then((res) => setNotes(res.data)).catch(() => {});
+  }, [id]);
 
   const handleEnroll = async () => {
     setEnrolling(true);

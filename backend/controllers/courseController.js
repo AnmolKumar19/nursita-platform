@@ -1,5 +1,5 @@
 import Course from "../models/Course.js";
-import Enrollment from "../models/Enrollment.js"; // <-- Add this import
+import Enrollment from "../models/Enrollment.js";
 
 export const createCourse = async (req, res) => {
   try {
@@ -41,7 +41,7 @@ export const getMyCourses = async (req, res) => {
   }
 };
 
-// UPDATED: Now checks if user is enrolled before returning course details
+// UPDATED: Safely returns course data and enrollment flag instead of blocking with 403
 export const getCourseById = async (req, res) => {
   try {
     const courseId = req.params.id;
@@ -55,30 +55,16 @@ export const getCourseById = async (req, res) => {
       (String(course.instructor._id || course.instructor) === String(req.user._id) || req.user.role === "admin");
 
     let isEnrolled = false;
-    if (req.user) {
+    if (req.user && req.user.role === "student") {
       const enrollment = await Enrollment.findOne({ user: req.user._id, course: courseId });
       if (enrollment) isEnrolled = true;
     }
 
-    // If they aren't the owner, admin, or enrolled, block access or return limited info
-    if (!isOwnerOrAdmin && !isEnrolled) {
-      return res.status(403).json({ 
-        message: "Access denied. You must enroll in this course to view its content.",
-        course: {
-          _id: course._id,
-          title: course.title,
-          description: course.description,
-          subject: course.subject,
-          thumbnailUrl: course.thumbnailUrl,
-          price: course.price,
-          instructor: course.instructor,
-        },
-        isEnrolled: false 
-      });
-    }
-
-    // If enrolled, owner, or admin, return full course content
-    res.json({ course, isEnrolled: true });
+    // Always return 200 with data so frontend renders smoothly without getting stuck on loading
+    res.json({
+      course,
+      isEnrolled: isOwnerOrAdmin || isEnrolled
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
