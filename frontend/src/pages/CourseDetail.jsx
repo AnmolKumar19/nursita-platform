@@ -21,11 +21,9 @@ const CourseDetail = () => {
         setCourse(res.data.course);
         setEnrolled(res.data.isEnrolled);
       })
-      .catch((err) => {
-        console.error("Failed to load course details", err);
-      });
+      .catch((err) => console.error("Failed to load course details", err));
 
-    // 2. Fetch classes & handle 403 access denial quietly
+    // 2. Fetch classes
     api.get(`/classes/course/${id}`)
       .then((res) => {
         setClasses(res.data);
@@ -34,17 +32,15 @@ const CourseDetail = () => {
       .catch((err) => {
         if (err.response?.status === 403) {
           setClasses([]);
-          setAccessDeniedMessage("You cannot access classes or study materials without enrolling in this course.");
+          setAccessDeniedMessage("Enroll in this course to unlock live classes, recorded sessions, and study materials.");
         }
       });
 
-    // 3. Fetch notes & handle 403 access denial quietly
+    // 3. Fetch notes
     api.get(`/notes/course/${id}`)
       .then((res) => setNotes(res.data))
       .catch((err) => {
-        if (err.response?.status === 403) {
-          setNotes([]);
-        }
+        if (err.response?.status === 403) setNotes([]);
       });
   }, [id, enrolled]);
 
@@ -58,7 +54,7 @@ const CourseDetail = () => {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
           currency: order.currency,
-          name: "Nursita",
+          name: "Nursita Platform",
           description: course.title,
           order_id: order.id,
           handler: async function (response) {
@@ -73,7 +69,6 @@ const CourseDetail = () => {
               if (verifyRes.data.success) {
                 setEnrolled(true);
                 setAccessDeniedMessage("");
-                alert("Payment successful! Course unlocked.");
               }
             } catch (err) {
               alert("Verification failed: " + (err.response?.data?.message || err.message));
@@ -85,15 +80,11 @@ const CourseDetail = () => {
             name: user?.name || "",
             email: user?.email || "",
           },
-          theme: {
-            color: "#0F172A",
-          },
+          theme: { color: "#0F172A" },
         };
 
         const rzp = new window.Razorpay(options);
-        rzp.on("payment.failed", function () {
-          setEnrolling(false);
-        });
+        rzp.on("payment.failed", () => setEnrolling(false));
         rzp.open();
       } else {
         await api.post("/enrollments", { courseId: id });
@@ -102,13 +93,13 @@ const CourseDetail = () => {
         setEnrolling(false);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Could not process enrollment/payment");
+      alert(err.response?.data?.message || "Could not process enrollment");
       setEnrolling(false);
     }
   };
 
   const handleDeleteNote = async (noteId) => {
-    if (!window.confirm("Are you sure you want to delete this material?")) return;
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
     try {
       await api.delete(`/notes/${noteId}`);
       setNotes((prev) => prev.filter((n) => n._id !== noteId));
@@ -127,158 +118,287 @@ const CourseDetail = () => {
     }
   };
 
-  if (!course) return <p className="max-w-6xl mx-auto px-6 py-16 text-ink/50">Loading…</p>;
+  if (!course) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-pulse flex space-x-3 items-center text-slate-400 font-medium">
+          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce"></div>
+          <span>Loading course workspace...</span>
+        </div>
+      </div>
+    );
+  }
 
   const isCourseOwner = user?.role === "admin" || String(user?._id) === String(course.instructor?._id || course.instructor);
   const dpps = notes.filter((n) => n.type === "dpp");
   const noteFiles = notes.filter((n) => n.type === "note");
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-16">
-      <span className="text-xs uppercase tracking-wide text-teal font-mono">{course.subject}</span>
-      <h1 className="font-display text-4xl font-semibold mt-1">{course.title}</h1>
-      <p className="text-ink/60 mt-3 max-w-2xl">{course.description}</p>
-      <p className="text-sm text-ink/50 mt-2">Taught by {course.instructor?.name}</p>
+    <div className="min-h-screen bg-slate-50/50 pb-20">
+      {/* Hero Header Card */}
+      <div className="bg-slate-900 text-white border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 py-12 lg:py-16">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-3 py-1 text-xs font-semibold tracking-wider uppercase rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
+              {course.subject}
+            </span>
+            <span className="text-xs text-slate-400 font-mono">ID: {course._id.slice(-6)}</span>
+          </div>
 
-      {user?.role === "student" && (
-        <button
-          onClick={handleEnroll}
-          disabled={enrolled || enrolling}
-          className="mt-6 px-6 py-2.5 rounded-lg bg-ink text-paper font-medium hover:bg-marigold hover:text-ink transition-colors disabled:opacity-50"
-        >
-          {enrolled ? "Enrolled ✓" : enrolling ? "Processing…" : "Enroll — " + (course.price ? `₹${course.price}` : "Free")}
-        </button>
-      )}
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-50 mb-4">
+            {course.title}
+          </h1>
 
-      <div className="flex gap-2 mt-10 border-b border-rule">
-        {[
-          { key: "classes", label: "Live & recorded classes" },
-          { key: "notes", label: "Notes" },
-          { key: "dpp", label: "DPP" },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === t.key ? "border-marigold text-ink" : "border-transparent text-ink/50 hover:text-ink"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+          <p className="text-slate-300 text-base md:text-lg max-w-3xl leading-relaxed mb-6">
+            {course.description}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-teal-400 border border-slate-700">
+                {course.instructor?.name ? course.instructor.name[0] : "I"}
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Instructor</p>
+                <p className="text-sm font-semibold text-slate-200">{course.instructor?.name || "Lead Faculty"}</p>
+              </div>
+            </div>
+
+            {user?.role === "student" && (
+              <button
+                onClick={handleEnroll}
+                disabled={enrolled || enrolling}
+                className={`px-8 py-3.5 rounded-xl font-semibold shadow-lg transition-all duration-200 flex items-center gap-2 ${
+                  enrolled
+                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 cursor-default"
+                    : "bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-teal-500/10 active:scale-95"
+                }`}
+              >
+                {enrolled ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Enrolled
+                  </>
+                ) : enrolling ? (
+                  "Processing Enrollment..."
+                ) : (
+                  `Enroll Now — ${course.price ? `₹${course.price}` : "Free"}`
+                )}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Lock Card for Unenrolled Users */}
-      {!enrolled && user?.role === "student" && accessDeniedMessage ? (
-        <div className="mt-8 p-6 bg-paper rounded-xl border border-rule text-center space-y-2 max-w-lg">
-          <p className="font-medium text-ink/80">🔒 Content Locked</p>
-          <p className="text-sm text-ink/60">{accessDeniedMessage}</p>
+      {/* Main Workspace Area */}
+      <div className="max-w-6xl mx-auto px-6 mt-8">
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 p-1.5 bg-slate-200/60 rounded-xl max-w-fit mb-8 border border-slate-300/50">
+          {[
+            { key: "classes", label: "Lectures & Live", count: classes.length },
+            { key: "notes", label: "Class Notes", count: noteFiles.length },
+            { key: "dpp", label: "DPPs & Practice", count: dpps.length },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center gap-2 ${
+                tab === t.key
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              {t.label}
+              {enrolled && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  tab === t.key ? "bg-slate-100 text-slate-700" : "bg-slate-300/50 text-slate-600"
+                }`}>
+                  {t.count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          {tab === "classes" && (
-            <div className="mt-8 space-y-4">
-              {classes.length === 0 && <p className="text-ink/50">No classes scheduled yet.</p>}
-              {classes.map((c) => (
-                <div
-                  key={c._id}
-                  className="flex items-center justify-between border border-rule rounded-xl px-5 py-4 bg-white hover:border-ink transition-colors"
-                >
-                  <Link to={`/classes/${c._id}`} className="flex-1">
-                    <p className="font-medium">{c.title}</p>
-                    <p className="text-sm text-ink/50">
-                      {new Date(c.scheduledAt).toLocaleString()}
-                    </p>
-                  </Link>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`text-xs font-mono px-3 py-1 rounded-full ${
-                        c.status === "live"
-                          ? "bg-teal/10 text-teal"
-                          : c.status === "ended"
-                          ? "bg-ink/5 text-ink/60"
-                          : "bg-marigold/15 text-marigold"
-                      }`}
+
+        {/* Lock Card for Unenrolled Students */}
+        {!enrolled && user?.role === "student" && accessDeniedMessage ? (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center max-w-lg mx-auto my-12 space-y-4">
+            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-100">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">Course Content Locked</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">{accessDeniedMessage}</p>
+            <button
+              onClick={handleEnroll}
+              className="mt-2 w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors"
+            >
+              Unlock Access
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* CLASSES TAB */}
+            {tab === "classes" && (
+              <div className="grid gap-4">
+                {classes.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
+                    No scheduled lectures currently available.
+                  </div>
+                ) : (
+                  classes.map((c) => (
+                    <div
+                      key={c._id}
+                      className="bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 p-6 shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                     >
-                      {c.status === "live" ? "● Live now" : c.status === "ended" ? "Recording" : "Scheduled"}
-                    </span>
-                    {isCourseOwner && (
-                      <button
-                        onClick={() => handleDeleteClass(c._id)}
-                        className="text-xs text-red-500 hover:underline font-medium"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <Link to={`/classes/${c._id}`} className="flex-1 group">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-bold text-lg text-slate-900 group-hover:text-teal-600 transition-colors">
+                            {c.title}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-slate-500 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {new Date(c.scheduledAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+                        </p>
+                      </Link>
 
-          {tab === "notes" && (
-            <div className="mt-8 space-y-3">
-              {noteFiles.length === 0 && <p className="text-ink/50">No notes uploaded yet.</p>}
-              {noteFiles.map((n) => (
-                <div key={n._id} className="margin-rule flex items-center justify-between py-3">
-                  <a
-                    href={n.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium hover:text-marigold transition-colors"
-                  >
-                    {n.title}
-                  </a>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-ink/40 font-mono">
-                      {new Date(n.createdAt).toLocaleDateString()}
-                    </span>
-                    {isCourseOwner && (
-                      <button
-                        onClick={() => handleDeleteNote(n._id)}
-                        className="text-xs text-red-500 hover:underline font-medium"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <div className="flex items-center gap-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
+                          c.status === "live"
+                            ? "bg-rose-50 text-rose-600 border border-rose-200"
+                            : c.status === "ended"
+                            ? "bg-slate-100 text-slate-600"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {c.status === "live" && <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />}
+                          {c.status === "live" ? "Live Session" : c.status === "ended" ? "Recorded" : "Scheduled"}
+                        </span>
 
-          {tab === "dpp" && (
-            <div className="mt-8 space-y-3">
-              {dpps.length === 0 && <p className="text-ink/50">No DPP uploaded yet.</p>}
-              {dpps.map((n) => (
-                <div key={n._id} className="margin-rule flex items-center justify-between py-3">
-                  <a
-                    href={n.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium hover:text-marigold transition-colors"
-                  >
-                    {n.title}
-                  </a>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-ink/40 font-mono">
-                      {new Date(n.createdAt).toLocaleDateString()}
-                    </span>
-                    {isCourseOwner && (
-                      <button
-                        onClick={() => handleDeleteNote(n._id)}
-                        className="text-xs text-red-500 hover:underline font-medium"
-                      >
-                        Delete
-                      </button>
-                    )}
+                        <Link
+                          to={`/classes/${c._id}`}
+                          className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
+                        >
+                          Join Class →
+                        </Link>
+
+                        {isCourseOwner && (
+                          <button
+                            onClick={() => handleDeleteClass(c._id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                            title="Delete Class"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* NOTES TAB */}
+            {tab === "notes" && (
+              <div className="grid gap-3">
+                {noteFiles.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
+                    No notes uploaded for this course yet.
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                ) : (
+                  noteFiles.map((n) => (
+                    <div key={n._id} className="bg-white rounded-xl border border-slate-200/80 p-4 px-6 shadow-sm flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs uppercase border border-rose-100">
+                          PDF
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{n.title}</p>
+                          <p className="text-xs text-slate-400 font-mono">{new Date(n.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={n.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700 text-sm font-semibold transition-colors"
+                        >
+                          View Document
+                        </a>
+                        {isCourseOwner && (
+                          <button
+                            onClick={() => handleDeleteNote(n._id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* DPP TAB */}
+            {tab === "dpp" && (
+              <div className="grid gap-3">
+                {dpps.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
+                    No Daily Practice Problems (DPP) uploaded yet.
+                  </div>
+                ) : (
+                  dpps.map((n) => (
+                    <div key={n._id} className="bg-white rounded-xl border border-slate-200/80 p-4 px-6 shadow-sm flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs uppercase border border-indigo-100">
+                          DPP
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{n.title}</p>
+                          <p className="text-xs text-slate-400 font-mono">{new Date(n.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={n.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700 text-sm font-semibold transition-colors"
+                        >
+                          View Problem Set
+                        </a>
+                        {isCourseOwner && (
+                          <button
+                            onClick={() => handleDeleteNote(n._id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
