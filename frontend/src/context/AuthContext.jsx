@@ -34,13 +34,21 @@ export const AuthProvider = ({ children }) => {
     return res.data.user;
   };
 
+  // NEW: Google Login Context Function
+  const googleLogin = async (credential) => {
+    const res = await api.post("/auth/google", { credential });
+    localStorage.setItem("nursita_token", res.data.token); // Saves the correct token name
+    setUser(res.data.user); // Updates the global React state
+    return res.data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem("nursita_token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

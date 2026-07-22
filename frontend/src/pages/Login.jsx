@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
-  const { login } = useAuth();
+  // 1. Pull in googleLogin from your updated AuthContext
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -61,6 +63,44 @@ const Login = () => {
           {loading ? "Logging in…" : "Log in"}
         </button>
       </form>
+
+      {/* Google Login Section */}
+      <div className="mt-6">
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-rule"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-ink/50">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              try {
+                setLoading(true);
+                setError("");
+                
+                // 2. Pass the token directly to your AuthContext
+                await googleLogin(credentialResponse.credential);
+                
+                // 3. Cleanly navigate to the dashboard using React Router
+                navigate("/dashboard");
+                
+              } catch (err) {
+                setError(err.response?.data?.message || "Google Login failed");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            onError={() => {
+              console.log('Login Failed');
+              setError("Google Login was closed or failed.");
+            }}
+          />
+        </div>
+      </div>
 
       <p className="text-sm text-ink/60 mt-6">
         New to Nursita?{" "}

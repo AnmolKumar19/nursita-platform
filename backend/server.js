@@ -17,7 +17,8 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173', 
-    'https://nursita-platform.vercel.app' // <-- PASTE YOUR EXACT VERCEL URL HERE
+    'http://localhost:5174', // <-- Added to allow your current Vite port
+    'https://nursita-platform.vercel.app' 
   ],
   credentials: true
 }));

@@ -18,12 +18,36 @@ function App() {
       <Navbar />
       <main className="flex-1">
         <Routes>
+          {/* === PUBLIC ROUTES === */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/courses/:id" element={<CourseDetail />} />
-          <Route path="/classes/:id" element={<LiveClass />} />
+
+          {/* === PROTECTED ROUTES (Requires Login) === */}
+          <Route 
+            path="/courses" 
+            element={
+              <ProtectedRoute>
+                <Courses />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/courses/:id" 
+            element={
+              <ProtectedRoute>
+                <CourseDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/classes/:id" 
+            element={
+              <ProtectedRoute>
+                <LiveClass />
+              </ProtectedRoute>
+            } 
+          />
           <Route
             path="/dashboard"
             element={
@@ -32,6 +56,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          {/* === ROLE-BASED ROUTES === */}
           <Route
             path="/instructor"
             element={
