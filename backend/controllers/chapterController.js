@@ -1,4 +1,4 @@
-import Chapter from "../models/chapter.js";
+import Chapter from "../models/Chapter.js";
 import Course from "../models/Course.js";
 
 // Create a new Chapter in a course
