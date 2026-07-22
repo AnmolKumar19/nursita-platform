@@ -18,8 +18,8 @@ const ChapterManagement = ({ courseId }) => {
   const fetchChapters = async () => {
     try {
       setLoading(true);
-      // Use /api/chapters/course/... or /chapters/course/... depending on your baseURL
-      const { data } = await api.get(`/api/chapters/course/${courseId}`);
+      // Removed extra /api since axios baseURL already includes /api
+      const { data } = await api.get(`/chapters/course/${courseId}`);
       setChapters(data);
       setOrder(data.length + 1);
     } catch (err) {
@@ -34,7 +34,8 @@ const ChapterManagement = ({ courseId }) => {
     if (!title.trim()) return alert("Chapter title is required");
 
     try {
-      const { data } = await api.post("/api/chapters", {
+      // Removed extra /api
+      const { data } = await api.post("/chapters", {
         courseId,
         title,
         description,
@@ -54,7 +55,8 @@ const ChapterManagement = ({ courseId }) => {
   const handleDeleteChapter = async (chapterId) => {
     if (!window.confirm("Are you sure? This will unassign all lectures and files in this chapter.")) return;
     try {
-      await api.delete(`/api/chapters/${chapterId}`);
+      // Removed extra /api
+      await api.delete(`/chapters/${chapterId}`);
       setChapters((prev) => prev.filter((ch) => ch._id !== chapterId));
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete chapter");
