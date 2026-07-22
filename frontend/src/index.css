@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: #e8a33d55;
+}
+
+/* visible keyboard focus, always */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #e8a33d;
+  outline-offset: 2px;
+}
+
+/* the notebook margin-line signature, used on note/DPP cards */
+.margin-rule {
+  border-left: 2px solid #c2483b;
+  padding-left: 1rem;
+}
