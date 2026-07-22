@@ -9,6 +9,7 @@ import classRoutes from "./routes/classRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import enrollmentRoutes from "./routes/enrollmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import chapterRoutes from "./routes/chapterRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -36,6 +37,7 @@ app.use("/api/classes", classRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/chapters", chapterRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));

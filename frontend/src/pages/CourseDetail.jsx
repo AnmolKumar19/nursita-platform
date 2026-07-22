@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import ChapterAccordion from "../components/ChapterAccordion.jsx";
+import ChapterManagement from "../components/ChapterManagement.jsx";
+import UploadModal from "../components/UploadModal.jsx";
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -11,26 +13,22 @@ const CourseDetail = () => {
   const [chapters, setChapters] = useState([]);
   const [classes, setClasses] = useState([]);
   const [notes, setNotes] = useState([]);
-  const [tab, setTab] = useState("curriculum"); // Default tab set to Curriculum Accordion
+  const [tab, setTab] = useState("curriculum");
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [accessDeniedMessage, setAccessDeniedMessage] = useState("");
 
-  useEffect(() => {
-    // 1. Fetch course details
-    api.get(`/courses/${id}`)
-      .then((res) => {
-        setCourse(res.data.course);
-        setEnrolled(res.data.isEnrolled);
-      })
-      .catch((err) => console.error("Failed to load course details", err));
+  // Modals state for instructors
+  const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
-    // 2. Fetch Chapters
+  const fetchCourseData = () => {
+    // Fetch Chapters
     api.get(`/chapters/course/${id}`)
       .then((res) => setChapters(res.data))
       .catch(() => setChapters([]));
 
-    // 3. Fetch classes
+    // Fetch Classes
     api.get(`/classes/course/${id}`)
       .then((res) => {
         setClasses(res.data);
@@ -43,12 +41,24 @@ const CourseDetail = () => {
         }
       });
 
-    // 4. Fetch notes
+    // Fetch Notes
     api.get(`/notes/course/${id}`)
       .then((res) => setNotes(res.data))
       .catch((err) => {
         if (err.response?.status === 403) setNotes([]);
       });
+  };
+
+  useEffect(() => {
+    // Fetch course details
+    api.get(`/courses/${id}`)
+      .then((res) => {
+        setCourse(res.data.course);
+        setEnrolled(res.data.isEnrolled);
+      })
+      .catch((err) => console.error("Failed to load course details", err));
+
+    fetchCourseData();
   }, [id, enrolled]);
 
   const handleEnroll = async () => {
@@ -171,30 +181,51 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {user?.role === "student" && (
-              <button
-                onClick={handleEnroll}
-                disabled={enrolled || enrolling}
-                className={`px-8 py-3.5 rounded-xl font-semibold shadow-lg transition-all duration-200 flex items-center gap-2 ${
-                  enrolled
-                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 cursor-default"
-                    : "bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-teal-500/10 active:scale-95"
-                }`}
-              >
-                {enrolled ? (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Enrolled
-                  </>
-                ) : enrolling ? (
-                  "Processing Enrollment..."
-                ) : (
-                  `Enroll Now — ${course.price ? `₹${course.price}` : "Free"}`
-                )}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Instructor Actions */}
+              {isCourseOwner && (
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setShowChapterModal(true)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-400 border border-teal-500/30 text-sm font-semibold transition-colors"
+                  >
+                    ⚙️ Manage Chapters
+                  </button>
+                  <button
+                    onClick={() => setShowUploadModal(true)}
+                    className="px-5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-sm font-bold shadow-lg shadow-teal-500/10 transition-colors"
+                  >
+                    ＋ Upload Material
+                  </button>
+                </div>
+              )}
+
+              {/* Student Enroll Button */}
+              {user?.role === "student" && (
+                <button
+                  onClick={handleEnroll}
+                  disabled={enrolled || enrolling}
+                  className={`px-8 py-3.5 rounded-xl font-semibold shadow-lg transition-all duration-200 flex items-center gap-2 ${
+                    enrolled
+                      ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 cursor-default"
+                      : "bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-teal-500/10 active:scale-95"
+                  }`}
+                >
+                  {enrolled ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Enrolled
+                    </>
+                  ) : enrolling ? (
+                    "Processing Enrollment..."
+                  ) : (
+                    `Enroll Now — ${course.price ? `₹${course.price}` : "Free"}`
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -219,7 +250,7 @@ const CourseDetail = () => {
               }`}
             >
               {t.label}
-              {enrolled && (
+              {(enrolled || isCourseOwner) && (
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                   tab === t.key ? "bg-slate-100 text-slate-700" : "bg-slate-300/50 text-slate-600"
                 }`}>
@@ -430,6 +461,45 @@ const CourseDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Chapter Management Modal */}
+      {showChapterModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full relative shadow-2xl my-8">
+            <button
+              onClick={() => {
+                setShowChapterModal(false);
+                fetchCourseData();
+              }}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 font-bold p-2"
+            >
+              ✕
+            </button>
+            <ChapterManagement courseId={id} />
+          </div>
+        </div>
+      )}
+
+      {/* Upload Material Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full relative shadow-2xl">
+            <button
+              onClick={() => setShowUploadModal(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 font-bold p-2"
+            >
+              ✕
+            </button>
+            <UploadModal
+              courseId={id}
+              onSuccess={() => {
+                setShowUploadModal(false);
+                fetchCourseData();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

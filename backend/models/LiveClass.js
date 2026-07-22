@@ -6,17 +6,49 @@ import mongoose from "mongoose";
 // So live class + recording are literally one document.
 const liveClassSchema = new mongoose.Schema(
   {
-    course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-    chapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", required: false },
-    title: { type: String, required: true, trim: true },
-    description: { type: String, default: "" },
-    instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    youtubeVideoId: { type: String, required: true, trim: true },
-    scheduledAt: { type: Date, required: true },
+    course: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Course", 
+      required: true,
+      index: true 
+    },
+    chapter: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Chapter", 
+      required: false,
+      default: null,
+      index: true 
+    },
+    title: { 
+      type: String, 
+      required: true, 
+      trim: true 
+    },
+    description: { 
+      type: String, 
+      default: "",
+      trim: true 
+    },
+    instructor: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User", 
+      required: true 
+    },
+    youtubeVideoId: { 
+      type: String, 
+      required: true, 
+      trim: true 
+    },
+    scheduledAt: { 
+      type: Date, 
+      required: true,
+      index: true 
+    },
     status: {
       type: String,
       enum: ["scheduled", "live", "ended"],
       default: "scheduled",
+      index: true
     },
   },
   { timestamps: true }
