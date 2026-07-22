@@ -12,24 +12,45 @@ const CourseDetail = () => {
   const [tab, setTab] = useState("classes");
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [accessDeniedMessage, setAccessDeniedMessage] = useState("");
 
   useEffect(() => {
-    // FIX: Extract course and isEnrolled from the new backend response wrapper
-    api.get(`/courses/${id}`).then((res) => {
-      setCourse(res.data.course);
-      setEnrolled(res.data.isEnrolled);
-    }).catch((err) => {
-      console.error("Failed to load course details", err);
-    });
+    // 1. Fetch course details
+    api.get(`/courses/${id}`)
+      .then((res) => {
+        setCourse(res.data.course);
+        setEnrolled(res.data.isEnrolled);
+      })
+      .catch((err) => {
+        console.error("Failed to load course details", err);
+      });
 
-    api.get(`/classes/course/${id}`).then((res) => setClasses(res.data)).catch(() => {});
-    api.get(`/notes/course/${id}`).then((res) => setNotes(res.data)).catch(() => {});
-  }, [id]);
+    // 2. Fetch classes & handle 403 access denial quietly
+    api.get(`/classes/course/${id}`)
+      .then((res) => {
+        setClasses(res.data);
+        setAccessDeniedMessage("");
+      })
+      .catch((err) => {
+        if (err.response?.status === 403) {
+          setClasses([]);
+          setAccessDeniedMessage("You cannot access classes or study materials without enrolling in this course.");
+        }
+      });
+
+    // 3. Fetch notes & handle 403 access denial quietly
+    api.get(`/notes/course/${id}`)
+      .then((res) => setNotes(res.data))
+      .catch((err) => {
+        if (err.response?.status === 403) {
+          setNotes([]);
+        }
+      });
+  }, [id, enrolled]);
 
   const handleEnroll = async () => {
     setEnrolling(true);
     try {
-      // If course has a price greater than 0, open Razorpay Checkout
       if (course.price && course.price > 0) {
         const { data: order } = await api.post("/payments/create-order", { courseId: id });
 
@@ -51,6 +72,7 @@ const CourseDetail = () => {
               
               if (verifyRes.data.success) {
                 setEnrolled(true);
+                setAccessDeniedMessage("");
                 alert("Payment successful! Course unlocked.");
               }
             } catch (err) {
@@ -74,9 +96,9 @@ const CourseDetail = () => {
         });
         rzp.open();
       } else {
-        // Free course enrollment flow
         await api.post("/enrollments", { courseId: id });
         setEnrolled(true);
+        setAccessDeniedMessage("");
         setEnrolling(false);
       }
     } catch (err) {
@@ -125,75 +147,85 @@ const CourseDetail = () => {
         ))}
       </div>
 
-      {tab === "classes" && (
-        <div className="mt-8 space-y-4">
-          {classes.length === 0 && <p className="text-ink/50">No classes scheduled yet.</p>}
-          {classes.map((c) => (
-            <Link
-              key={c._id}
-              to={`/classes/${c._id}`}
-              className="flex items-center justify-between border border-rule rounded-xl px-5 py-4 bg-white hover:border-ink transition-colors"
-            >
-              <div>
-                <p className="font-medium">{c.title}</p>
-                <p className="text-sm text-ink/50">
-                  {new Date(c.scheduledAt).toLocaleString()}
-                </p>
-              </div>
-              <span
-                className={`text-xs font-mono px-3 py-1 rounded-full ${
-                  c.status === "live"
-                    ? "bg-teal/10 text-teal"
-                    : c.status === "ended"
-                    ? "bg-ink/5 text-ink/60"
-                    : "bg-marigold/15 text-marigold"
-                }`}
-              >
-                {c.status === "live" ? "● Live now" : c.status === "ended" ? "Recording" : "Scheduled"}
-              </span>
-            </Link>
-          ))}
+      {/* Lock Card for Unenrolled Users */}
+      {!enrolled && accessDeniedMessage ? (
+        <div className="mt-8 p-6 bg-paper rounded-xl border border-rule text-center space-y-2 max-w-lg">
+          <p className="font-medium text-ink/80">🔒 Content Locked</p>
+          <p className="text-sm text-ink/60">{accessDeniedMessage}</p>
         </div>
-      )}
+      ) : (
+        <>
+          {tab === "classes" && (
+            <div className="mt-8 space-y-4">
+              {classes.length === 0 && <p className="text-ink/50">No classes scheduled yet.</p>}
+              {classes.map((c) => (
+                <Link
+                  key={c._id}
+                  to={`/classes/${c._id}`}
+                  className="flex items-center justify-between border border-rule rounded-xl px-5 py-4 bg-white hover:border-ink transition-colors"
+                >
+                  <div>
+                    <p className="font-medium">{c.title}</p>
+                    <p className="text-sm text-ink/50">
+                      {new Date(c.scheduledAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs font-mono px-3 py-1 rounded-full ${
+                      c.status === "live"
+                        ? "bg-teal/10 text-teal"
+                        : c.status === "ended"
+                        ? "bg-ink/5 text-ink/60"
+                        : "bg-marigold/15 text-marigold"
+                    }`}
+                  >
+                    {c.status === "live" ? "● Live now" : c.status === "ended" ? "Recording" : "Scheduled"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
 
-      {tab === "notes" && (
-        <div className="mt-8 space-y-3">
-          {noteFiles.length === 0 && <p className="text-ink/50">No notes uploaded yet.</p>}
-          {noteFiles.map((n) => (
-            <a
-              key={n._id}
-              href={n.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
-            >
-              <span className="font-medium">{n.title}</span>
-              <span className="text-sm text-ink/40 font-mono">
-                {new Date(n.createdAt).toLocaleDateString()}
-              </span>
-            </a>
-          ))}
-        </div>
-      )}
+          {tab === "notes" && (
+            <div className="mt-8 space-y-3">
+              {noteFiles.length === 0 && <p className="text-ink/50">No notes uploaded yet.</p>}
+              {noteFiles.map((n) => (
+                <a
+                  key={n._id}
+                  href={n.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
+                >
+                  <span className="font-medium">{n.title}</span>
+                  <span className="text-sm text-ink/40 font-mono">
+                    {new Date(n.createdAt).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
 
-      {tab === "dpp" && (
-        <div className="mt-8 space-y-3">
-          {dpps.length === 0 && <p className="text-ink/50">No DPP uploaded yet.</p>}
-          {dpps.map((n) => (
-            <a
-              key={n._id}
-              href={n.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
-            >
-              <span className="font-medium">{n.title}</span>
-              <span className="text-sm text-ink/40 font-mono">
-                {new Date(n.createdAt).toLocaleDateString()}
-              </span>
-            </a>
-          ))}
-        </div>
+          {tab === "dpp" && (
+            <div className="mt-8 space-y-3">
+              {dpps.length === 0 && <p className="text-ink/50">No DPP uploaded yet.</p>}
+              {dpps.map((n) => (
+                <a
+                  key={n._id}
+                  href={n.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
+                >
+                  <span className="font-medium">{n.title}</span>
+                  <span className="text-sm text-ink/40 font-mono">
+                    {new Date(n.createdAt).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
