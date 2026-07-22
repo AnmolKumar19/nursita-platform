@@ -25,9 +25,58 @@ const CourseDetail = () => {
   const handleEnroll = async () => {
     setEnrolling(true);
     try {
-      await api.post("/enrollments", { courseId: id });
-      setEnrolled(true);
-    } finally {
+      // If course has a price greater than 0, open Razorpay Checkout
+      if (course.price && course.price > 0) {
+        const { data: order } = await api.post("/payments/create-order", { courseId: id });
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Nursita",
+          description: course.title,
+          order_id: order.id,
+          handler: async function (response) {
+            try {
+              const verifyRes = await api.post("/payments/verify-payment", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                courseId: id,
+              });
+              
+              if (verifyRes.data.success) {
+                setEnrolled(true);
+                alert("Payment successful! Course unlocked.");
+              }
+            } catch (err) {
+              alert("Verification failed: " + (err.response?.data?.message || err.message));
+            } finally {
+              setEnrolling(false);
+            }
+          },
+          prefill: {
+            name: user?.name || "",
+            email: user?.email || "",
+          },
+          theme: {
+            color: "#0F172A",
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", function () {
+          setEnrolling(false);
+        });
+        rzp.open();
+      } else {
+        // Free course enrollment flow
+        await api.post("/enrollments", { courseId: id });
+        setEnrolled(true);
+        setEnrolling(false);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not process enrollment/payment");
       setEnrolling(false);
     }
   };
@@ -50,7 +99,7 @@ const CourseDetail = () => {
           disabled={enrolled || enrolling}
           className="mt-6 px-6 py-2.5 rounded-lg bg-ink text-paper font-medium hover:bg-marigold hover:text-ink transition-colors disabled:opacity-50"
         >
-          {enrolled ? "Enrolled ✓" : enrolling ? "Enrolling…" : "Enroll — " + (course.price ? `₹${course.price}` : "Free")}
+          {enrolled ? "Enrolled ✓" : enrolling ? "Processing…" : "Enroll — " + (course.price ? `₹${course.price}` : "Free")}
         </button>
       )}
 

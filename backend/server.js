@@ -8,12 +8,15 @@ import courseRoutes from "./routes/courseRoutes.js";
 import classRoutes from "./routes/classRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import enrollmentRoutes from "./routes/enrollmentRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js"; // Adjust path if needed
 
 dotenv.config();
 connectDB();
 
 const app = express();
 
+// Register route
+app.use("/api/payments", paymentRoutes);
 app.use(cors({
   origin: [
     'http://localhost:5173', 
