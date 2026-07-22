@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const noteSchema = new mongoose.Schema(
   {
     course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+    chapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter" }, // optional link to a chapter
     liveClass: { type: mongoose.Schema.Types.ObjectId, ref: "LiveClass" }, // optional link to a specific class
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true, trim: true },

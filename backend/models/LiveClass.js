@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 const liveClassSchema = new mongoose.Schema(
   {
     course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+    chapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", required: false },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

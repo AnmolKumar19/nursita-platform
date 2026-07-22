@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import ChapterAccordion from "../components/ChapterAccordion.jsx";
 
 const CourseDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [course, setCourse] = useState(null);
+  const [chapters, setChapters] = useState([]);
   const [classes, setClasses] = useState([]);
   const [notes, setNotes] = useState([]);
-  const [tab, setTab] = useState("classes");
+  const [tab, setTab] = useState("curriculum"); // Default tab set to Curriculum Accordion
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [accessDeniedMessage, setAccessDeniedMessage] = useState("");
@@ -23,7 +25,12 @@ const CourseDetail = () => {
       })
       .catch((err) => console.error("Failed to load course details", err));
 
-    // 2. Fetch classes
+    // 2. Fetch Chapters
+    api.get(`/chapters/course/${id}`)
+      .then((res) => setChapters(res.data))
+      .catch(() => setChapters([]));
+
+    // 3. Fetch classes
     api.get(`/classes/course/${id}`)
       .then((res) => {
         setClasses(res.data);
@@ -36,7 +43,7 @@ const CourseDetail = () => {
         }
       });
 
-    // 3. Fetch notes
+    // 4. Fetch notes
     api.get(`/notes/course/${id}`)
       .then((res) => setNotes(res.data))
       .catch((err) => {
@@ -197,7 +204,8 @@ const CourseDetail = () => {
         {/* Navigation Tabs */}
         <div className="flex gap-2 p-1.5 bg-slate-200/60 rounded-xl max-w-fit mb-8 border border-slate-300/50">
           {[
-            { key: "classes", label: "Lectures & Live", count: classes.length },
+            { key: "curriculum", label: "Chapters & Curriculum", count: chapters.length },
+            { key: "classes", label: "All Lectures", count: classes.length },
             { key: "notes", label: "Class Notes", count: noteFiles.length },
             { key: "dpp", label: "DPPs & Practice", count: dpps.length },
           ].map((t) => (
@@ -241,6 +249,29 @@ const CourseDetail = () => {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* CHAPTER CURRICULUM TAB (ACCORDION) */}
+            {tab === "curriculum" && (
+              <div>
+                {chapters.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
+                    No chapters created for this course yet. Use the "All Lectures" tab to view unassigned materials.
+                  </div>
+                ) : (
+                  chapters.map((ch) => (
+                    <ChapterAccordion
+                      key={ch._id}
+                      chapter={ch}
+                      classes={classes}
+                      notes={notes}
+                      isCourseOwner={isCourseOwner}
+                      onDeleteClass={handleDeleteClass}
+                      onDeleteNote={handleDeleteNote}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
             {/* CLASSES TAB */}
             {tab === "classes" && (
               <div className="grid gap-4">
