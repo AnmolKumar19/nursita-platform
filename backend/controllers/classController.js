@@ -79,3 +79,21 @@ export const updateClassStatus = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Delete scheduled or recorded class
+export const deleteClass = async (req, res) => {
+  try {
+    const liveClass = await LiveClass.findById(req.params.id);
+    if (!liveClass) return res.status(404).json({ message: "Class not found" });
+
+    // Ensure only the instructor who created the class or an admin can delete it
+    if (String(liveClass.instructor) !== String(req.user._id) && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to delete this class" });
+    }
+
+    await liveClass.deleteOne();
+    res.json({ message: "Class deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

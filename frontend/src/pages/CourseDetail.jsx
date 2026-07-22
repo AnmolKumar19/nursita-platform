@@ -107,8 +107,29 @@ const CourseDetail = () => {
     }
   };
 
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm("Are you sure you want to delete this material?")) return;
+    try {
+      await api.delete(`/notes/${noteId}`);
+      setNotes((prev) => prev.filter((n) => n._id !== noteId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete file");
+    }
+  };
+
+  const handleDeleteClass = async (classId) => {
+    if (!window.confirm("Are you sure you want to delete this class?")) return;
+    try {
+      await api.delete(`/classes/${classId}`);
+      setClasses((prev) => prev.filter((c) => c._id !== classId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete class");
+    }
+  };
+
   if (!course) return <p className="max-w-6xl mx-auto px-6 py-16 text-ink/50">Loading…</p>;
 
+  const isCourseOwner = user?.role === "admin" || String(user?._id) === String(course.instructor?._id || course.instructor);
   const dpps = notes.filter((n) => n.type === "dpp");
   const noteFiles = notes.filter((n) => n.type === "note");
 
@@ -148,7 +169,7 @@ const CourseDetail = () => {
       </div>
 
       {/* Lock Card for Unenrolled Users */}
-      {!enrolled && accessDeniedMessage ? (
+      {!enrolled && user?.role === "student" && accessDeniedMessage ? (
         <div className="mt-8 p-6 bg-paper rounded-xl border border-rule text-center space-y-2 max-w-lg">
           <p className="font-medium text-ink/80">🔒 Content Locked</p>
           <p className="text-sm text-ink/60">{accessDeniedMessage}</p>
@@ -159,29 +180,38 @@ const CourseDetail = () => {
             <div className="mt-8 space-y-4">
               {classes.length === 0 && <p className="text-ink/50">No classes scheduled yet.</p>}
               {classes.map((c) => (
-                <Link
+                <div
                   key={c._id}
-                  to={`/classes/${c._id}`}
                   className="flex items-center justify-between border border-rule rounded-xl px-5 py-4 bg-white hover:border-ink transition-colors"
                 >
-                  <div>
+                  <Link to={`/classes/${c._id}`} className="flex-1">
                     <p className="font-medium">{c.title}</p>
                     <p className="text-sm text-ink/50">
                       {new Date(c.scheduledAt).toLocaleString()}
                     </p>
+                  </Link>
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`text-xs font-mono px-3 py-1 rounded-full ${
+                        c.status === "live"
+                          ? "bg-teal/10 text-teal"
+                          : c.status === "ended"
+                          ? "bg-ink/5 text-ink/60"
+                          : "bg-marigold/15 text-marigold"
+                      }`}
+                    >
+                      {c.status === "live" ? "● Live now" : c.status === "ended" ? "Recording" : "Scheduled"}
+                    </span>
+                    {isCourseOwner && (
+                      <button
+                        onClick={() => handleDeleteClass(c._id)}
+                        className="text-xs text-red-500 hover:underline font-medium"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
-                  <span
-                    className={`text-xs font-mono px-3 py-1 rounded-full ${
-                      c.status === "live"
-                        ? "bg-teal/10 text-teal"
-                        : c.status === "ended"
-                        ? "bg-ink/5 text-ink/60"
-                        : "bg-marigold/15 text-marigold"
-                    }`}
-                  >
-                    {c.status === "live" ? "● Live now" : c.status === "ended" ? "Recording" : "Scheduled"}
-                  </span>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -190,18 +220,29 @@ const CourseDetail = () => {
             <div className="mt-8 space-y-3">
               {noteFiles.length === 0 && <p className="text-ink/50">No notes uploaded yet.</p>}
               {noteFiles.map((n) => (
-                <a
-                  key={n._id}
-                  href={n.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
-                >
-                  <span className="font-medium">{n.title}</span>
-                  <span className="text-sm text-ink/40 font-mono">
-                    {new Date(n.createdAt).toLocaleDateString()}
-                  </span>
-                </a>
+                <div key={n._id} className="margin-rule flex items-center justify-between py-3">
+                  <a
+                    href={n.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium hover:text-marigold transition-colors"
+                  >
+                    {n.title}
+                  </a>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-ink/40 font-mono">
+                      {new Date(n.createdAt).toLocaleDateString()}
+                    </span>
+                    {isCourseOwner && (
+                      <button
+                        onClick={() => handleDeleteNote(n._id)}
+                        className="text-xs text-red-500 hover:underline font-medium"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -210,18 +251,29 @@ const CourseDetail = () => {
             <div className="mt-8 space-y-3">
               {dpps.length === 0 && <p className="text-ink/50">No DPP uploaded yet.</p>}
               {dpps.map((n) => (
-                <a
-                  key={n._id}
-                  href={n.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="margin-rule flex items-center justify-between py-3 hover:text-marigold transition-colors"
-                >
-                  <span className="font-medium">{n.title}</span>
-                  <span className="text-sm text-ink/40 font-mono">
-                    {new Date(n.createdAt).toLocaleDateString()}
-                  </span>
-                </a>
+                <div key={n._id} className="margin-rule flex items-center justify-between py-3">
+                  <a
+                    href={n.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium hover:text-marigold transition-colors"
+                  >
+                    {n.title}
+                  </a>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-ink/40 font-mono">
+                      {new Date(n.createdAt).toLocaleDateString()}
+                    </span>
+                    {isCourseOwner && (
+                      <button
+                        onClick={() => handleDeleteNote(n._id)}
+                        className="text-xs text-red-500 hover:underline font-medium"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
