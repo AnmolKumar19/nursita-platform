@@ -14,7 +14,13 @@ connectDB();
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || "*", credentials: true }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173', 
+    'https://nursita-platform.vercel.app' // <-- PASTE YOUR EXACT VERCEL URL HERE
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ status: "Nursita API is running" }));
