@@ -2,15 +2,15 @@ import { Link } from "react-router-dom";
 
 const Home = () => (
   <div className="bg-slate-50 text-slate-800 min-h-screen">
-    {/* Hero: Ruled paper background styling */}
-    <section className="bg-white border-b border-slate-200/80">
+    {/* Hero Section with Warm Accent Colors */}
+    <section className="bg-white border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-6 pt-16 pb-20">
-        <span className="font-mono text-xs uppercase tracking-widest text-emerald-600 font-semibold">
+        <span className="font-mono text-xs uppercase tracking-widest text-amber-600 font-bold">
           Nursing made simple
         </span>
         <h1 className="text-4xl sm:text-6xl font-extrabold text-slate-900 leading-[1.1] mt-4 max-w-3xl tracking-tight">
           Live classes, notes and DPPs —
-          <span className="text-emerald-500"> built for nursing students.</span>
+          <span className="text-amber-500"> built for nursing students.</span>
         </h1>
         <p className="text-base sm:text-lg text-slate-600 mt-6 max-w-xl leading-relaxed">
           Nursita brings your faculty's live class, the recording, the day's notes and practice
@@ -19,7 +19,7 @@ const Home = () => (
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
             to="/courses"
-            className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all shadow-sm"
+            className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all shadow-md"
           >
             Browse courses
           </Link>
@@ -60,7 +60,7 @@ const Home = () => (
             key={step.n}
             className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all"
           >
-            <span className="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+            <span className="font-mono text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-full">
               {step.n}
             </span>
             <h3 className="text-lg font-bold text-slate-900 mt-4">{step.title}</h3>
@@ -72,12 +72,12 @@ const Home = () => (
 
     {/* Founder Section */}
     <section className="max-w-6xl mx-auto px-6 pb-20">
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-8 sm:p-10 flex flex-col sm:flex-row gap-8 items-start sm:items-center shadow-sm">
-        <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center shrink-0 shadow-md">
-          <span className="text-2xl font-black text-emerald-400">VR</span>
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-10 flex flex-col sm:flex-row gap-8 items-start sm:items-center shadow-sm">
+        <div className="w-20 h-20 rounded-full bg-slate-950 flex items-center justify-center shrink-0 shadow-md">
+          <span className="text-2xl font-black text-amber-400">VR</span>
         </div>
         <div>
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
             Founder &amp; Lead Instructor
           </span>
           <h2 className="text-2xl font-extrabold text-slate-900 mt-1">Vineeta Rani</h2>

@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import Footer from "./Footer.jsx"; // <-- 1. Import your Footer component
+import Footer from "./Footer.jsx";
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Set to false so the sidebar remains closed on page load
+
+  // Closed by default (w-0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  // Updated Navigation Links
   const navLinks = [
     {
       label: "Home",
@@ -63,14 +62,14 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="h-screen flex flex-col font-sans bg-slate-50 text-slate-800 overflow-hidden">
       {/* TOP HEADER BAR */}
-      <header className="h-16 bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-4 lg:px-6 flex items-center justify-between shadow-md">
+      <header className="h-16 bg-[rgb(11,19,36)] border-b border-slate-800 shrink-0 px-4 lg:px-6 flex items-center justify-between z-40 shadow-md">
         <div className="flex items-center gap-4">
           {/* Toggle Sidebar Button */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-2 text-slate-300 hover:text-amber-400 rounded-lg hover:bg-slate-800 transition-colors"
             title="Toggle Menu"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -79,28 +78,28 @@ const AppLayout = () => {
           </button>
 
           {/* Logo Branding */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-lg shadow-sm">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-extrabold text-lg shadow-sm">
               🩺
             </div>
             <span className="text-xl font-extrabold tracking-tight text-white">
-              Nursita<span className="text-emerald-400">.</span>
+              Nursita<span className="text-amber-500">.</span>
             </span>
           </Link>
         </div>
 
-        {/* TOP RIGHT USER PROFILE MENU */}
+        {/* PROFILE MENU */}
         <div className="relative">
           <button
             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            className="flex items-center gap-3 p-1.5 rounded-full hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700"
+            className="flex items-center gap-3 p-1.5 rounded-full hover:bg-slate-800 transition-colors"
           >
-            <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold flex items-center justify-center text-sm">
               {user?.name ? user.name[0].toUpperCase() : "U"}
             </div>
             <div className="hidden sm:block text-left pr-2">
               <p className="text-xs font-bold text-slate-100 leading-tight">{user?.name || "User Account"}</p>
-              <p className="text-[10px] font-semibold tracking-wider text-emerald-400 uppercase leading-tight">
+              <p className="text-[10px] font-semibold tracking-wider text-amber-400 uppercase leading-tight">
                 {user?.role || "Student"}
               </p>
             </div>
@@ -109,15 +108,14 @@ const AppLayout = () => {
             </svg>
           </button>
 
-          {/* Dropdown Profile Menu */}
           {isProfileMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200/80 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-xs text-slate-400 font-medium">Signed in as</p>
                 <p className="text-sm font-bold text-slate-800 truncate">{user?.email}</p>
               </div>
 
-              <div className="border-t border-slate-100 pt-1">
+              <div className="pt-1">
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
@@ -133,15 +131,15 @@ const AppLayout = () => {
         </div>
       </header>
 
-      {/* MAIN CONTAINER (SIDEBAR + PAGE CONTENT) */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* COLLAPSIBLE SIDEBAR */}
+      {/* BODY AREA */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* SIDEBAR: Hidden completely when closed, slides out when tapped */}
         <aside
-          className={`bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col h-full overflow-y-auto ${
-            isSidebarOpen ? "w-64" : "w-16"
+          className={`bg-[rgb(11,19,36)] border-r border-slate-800 transition-all duration-300 flex flex-col shrink-0 h-full overflow-hidden ${
+            isSidebarOpen ? "w-64 opacity-100" : "w-0 opacity-0 border-none"
           }`}
         >
-          <nav className="flex-1 p-2.5 space-y-1.5">
+          <nav className="flex-1 p-3 space-y-1.5 w-64">
             {navLinks
               .filter((link) => link.roles.includes(user?.role || "student"))
               .map((link) => {
@@ -150,40 +148,32 @@ const AppLayout = () => {
                   <Link
                     key={link.path}
                     to={link.path}
-                    title={!isSidebarOpen ? link.label : ""}
-                    className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
                       isActive
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                        : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
                     }`}
                   >
                     <span className="shrink-0">{link.icon}</span>
-                    {isSidebarOpen && <span className="truncate">{link.label}</span>}
+                    <span className="truncate">{link.label}</span>
                   </Link>
                 );
               })}
           </nav>
 
-          {/* Sidebar Footer Badge */}
-          {isSidebarOpen && (
-            <div className="p-4 m-3 bg-slate-800/50 rounded-2xl border border-slate-800 text-center">
-              <p className="text-[11px] font-medium text-slate-400">Nursita Portal v2.0</p>
-              <p className="text-[10px] text-emerald-400 font-semibold mt-0.5">🟢 Systems Operational</p>
-            </div>
-          )}
+          <div className="p-4 m-3 bg-slate-900/60 rounded-2xl border border-slate-800 text-center w-58">
+            <p className="text-[11px] font-medium text-slate-400">Nursita Portal</p>
+            <p className="text-[10px] text-amber-400 font-semibold mt-0.5">🟢 Systems Operational</p>
+          </div>
         </aside>
 
-        {/* DYNAMIC PAGE CONTENT AREA WITH FOOTER */}
-        <main className="flex-1 min-w-0 overflow-y-auto flex flex-col justify-between h-full bg-slate-50">
+        {/* MAIN PAGE AREA */}
+        <main className="flex-1 overflow-y-auto flex flex-col justify-between bg-slate-50">
           <div className="flex-1">
-             {/* 2. Page Content renders here */}
             <Outlet />
           </div>
-          
-          {/* 3. Footer renders beautifully at the bottom of the content window */}
-          <div className="w-full">
-            <Footer />
-          </div>
+          <Footer />
         </main>
       </div>
     </div>
