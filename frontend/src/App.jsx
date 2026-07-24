@@ -1,6 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 
@@ -16,59 +14,58 @@ import InstructorPanel from "./pages/InstructorPanel.jsx";
 function App() {
   return (
     <Routes>
-      {/* === PUBLIC ROUTES (Standard Header + Footer) === */}
-      <Route
-        path="/"
-        element={
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              <Home />
-            </main>
-            <Footer />
-          </div>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              <Login />
-            </main>
-            <Footer />
-          </div>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              <Register />
-            </main>
-            <Footer />
-          </div>
-        }
-      />
+      {/* === PUBLIC AUTH ROUTES (STANDALONE) === */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-      {/* === WORKSPACE ROUTES (Wrapped in Collapsible Sidebar Layout) === */}
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/courses/:id" element={<CourseDetail />} />
-        <Route path="/classes/:id" element={<LiveClass />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/my-batches" element={<Dashboard />} />
+      {/* === MAIN WORKSPACE ROUTES (WRAPPED IN APPLAYOUT WITH SIDEBAR) === */}
+      <Route element={<AppLayout />}>
+        {/* Landing Home Page inside AppLayout */}
+        <Route path="/" element={<Home />} />
 
-        {/* ROLE-BASED ROUTES */}
+        {/* Protected Application Routes */}
+        <Route
+          path="/courses"
+          element={
+            <ProtectedRoute>
+              <Courses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/:id"
+          element={
+            <ProtectedRoute>
+              <CourseDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/classes/:id"
+          element={
+            <ProtectedRoute>
+              <LiveClass />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-batches"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Role-Based Routes */}
         <Route
           path="/instructor"
           element={
