@@ -119,5 +119,39 @@ export const manualEnroll = async (req, res) => {
   }
 };
 
+// Admin/Instructor Route: Revoke course access by student email
+export const revokeAccess = async (req, res) => {
+  try {
+    const { email, courseId } = req.body;
+
+    if (!email || !courseId) {
+      return res.status(400).json({ message: "Email and course ID are required" });
+    }
+
+    // 1. Find the user by email
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ message: "No user found with this email" });
+    }
+
+    // 2. Find and delete the enrollment record
+    const deletedEnrollment = await Enrollment.findOneAndDelete({
+      student: user._id,
+      course: courseId,
+    });
+
+    if (!deletedEnrollment) {
+      return res.status(404).json({ message: "This user is not enrolled in this course." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Access successfully revoked for ${user.name || user.email}`,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Failed to revoke access" });
+  }
+};
+
 // Alias export to support both /manual and /grant-access routes
 export const enrollUserManually = manualEnroll;

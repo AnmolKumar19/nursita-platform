@@ -15,7 +15,6 @@ const GrantAccessModal = ({ courseId, courseName }) => {
       setLoading(true);
       setStatusMessage({ type: "", text: "" });
 
-      // Cleaned endpoint path (axios baseURL handles /api)
       const { data } = await api.post("/enrollments/manual", {
         email: email.trim().toLowerCase(),
         courseId,
@@ -35,6 +34,41 @@ const GrantAccessModal = ({ courseId, courseName }) => {
       setStatusMessage({
         type: "error",
         text: err.response?.data?.message || "Failed to grant access. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = async () => {
+    if (!email.trim()) {
+      setStatusMessage({ type: "error", text: "Please enter an email to revoke access." });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setStatusMessage({ type: "", text: "" });
+
+      const res = await api.post("/enrollments/revoke", {
+        email: email.trim().toLowerCase(),
+        courseId: courseId, // Using the correct prop
+      });
+
+      setStatusMessage({
+        type: "success",
+        text: res.data.message || "Access revoked successfully!",
+      });
+
+      setEmail("");
+      setTimeout(() => {
+        setIsOpen(false);
+        setStatusMessage({ type: "", text: "" });
+      }, 1800);
+    } catch (err) {
+      setStatusMessage({
+        type: "error",
+        text: err.response?.data?.message || "Error revoking access",
       });
     } finally {
       setLoading(false);
@@ -69,7 +103,7 @@ const GrantAccessModal = ({ courseId, courseName }) => {
             d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
           />
         </svg>
-        <span>Grant Student Access</span>
+        <span>Manage Student Access</span>
       </button>
 
       {/* Modal Backdrop & Dialog */}
@@ -88,7 +122,7 @@ const GrantAccessModal = ({ courseId, courseName }) => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Grant Manual Access</h3>
+                  <h3 className="font-bold text-slate-900 text-sm">Grant or Revoke Access</h3>
                   <p className="text-[11px] text-slate-500 truncate max-w-[240px]">
                     {courseName || "Select Course"}
                   </p>
@@ -109,7 +143,7 @@ const GrantAccessModal = ({ courseId, courseName }) => {
             {/* Form & Body */}
             <form onSubmit={handleGrantAccess} className="p-6 space-y-4">
               <p className="text-xs text-slate-500 leading-relaxed">
-                Provide a student's registered account email to give them full access to live classes, recordings, and course files without requiring payment.
+                Provide a student's registered account email to give them free access, or click revoke to remove their existing access.
               </p>
 
               {/* Status Banner */}
@@ -144,7 +178,7 @@ const GrantAccessModal = ({ courseId, courseName }) => {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -153,23 +187,33 @@ const GrantAccessModal = ({ courseId, courseName }) => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="inline-flex items-center justify-center px-5 py-2 text-xs font-bold text-slate-950 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl shadow-xs transition-all"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-1.5">
-                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Granting...
-                    </span>
-                  ) : (
-                    "Confirm Access"
-                  )}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button" // Important: type="button" prevents it from submitting the form
+                    onClick={handleRevokeAccess}
+                    disabled={loading}
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:bg-slate-100 disabled:text-slate-400 border border-rose-200/80 rounded-xl transition-all"
+                  >
+                    {loading ? "..." : "Revoke"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex items-center justify-center px-5 py-2 text-xs font-bold text-slate-950 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl shadow-xs transition-all"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Wait...
+                      </span>
+                    ) : (
+                      "Grant Access"
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

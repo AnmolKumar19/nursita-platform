@@ -5,6 +5,7 @@ import {
   checkEnrollment,
   manualEnroll,
   enrollUserManually,
+  revokeAccess,
 } from "../controllers/enrollmentController.js";
 import { protect, restrictTo } from "../middleware/auth.js";
 
@@ -19,5 +20,7 @@ router.get("/check/:courseId", protect, checkEnrollment);
 // Allows both admins and instructors to grant free batch access to students
 router.post("/manual", protect, restrictTo("admin", "instructor"), manualEnroll);
 router.post("/grant-access", protect, restrictTo("admin", "instructor"), enrollUserManually);
+// === REVOKE ACCESS ROUTE ===
+router.post("/revoke", protect, restrictTo("admin", "instructor"), revokeAccess); // <-- ADD THIS ROUTE
 
 export default router;
