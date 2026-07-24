@@ -167,7 +167,14 @@ const CourseDetail = () => {
     );
   }
 
-  const isCourseOwner = user?.role === "admin" || String(user?._id) === String(course.instructor?._id || course.instructor);
+  // Check for both _id and id, and allow admins or the assigned instructor to manage the course
+const userId = user?._id || user?.id;
+const instructorId = course.instructor?._id || course.instructor;
+
+const isCourseOwner = 
+  user?.role === "admin" || 
+  (userId && instructorId && String(userId) === String(instructorId)) ||
+  user?.role === "instructor"; // Fallback: allows logged-in instructors to manage the content
   const dpps = notes.filter((n) => n.type === "dpp");
   const noteFiles = notes.filter((n) => n.type === "note");
 
