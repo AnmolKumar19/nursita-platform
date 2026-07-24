@@ -1,90 +1,51 @@
 import Enrollment from "../models/Enrollment.js";
-import Course from "../models/Course.js";
 import User from "../models/User.js";
+import Course from "../models/Course.js";
 
-// Standard Student Enrollment
-export const enrollInCourse = async (req, res) => {
-  try {
-    const { courseId } = req.body;
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: "Course not found" });
-
-    const existing = await Enrollment.findOne({ student: req.user._id, course: courseId });
-    if (existing) return res.status(409).json({ message: "Already enrolled" });
-
-    const enrollment = await Enrollment.create({ student: req.user._id, course: courseId });
-    res.status(201).json(enrollment);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Fetch Student's Enrolled Courses
-export const getMyEnrollments = async (req, res) => {
-  try {
-    const enrollments = await Enrollment.find({ student: req.user._id }).populate({
-      path: "course",
-      populate: { path: "instructor", select: "name" },
-    });
-    res.json(enrollments);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Check if Logged-In Student is Enrolled
-export const checkEnrollment = async (req, res) => {
-  try {
-    const enrollment = await Enrollment.findOne({
-      student: req.user._id,
-      course: req.params.courseId,
-    });
-    res.json({ enrolled: !!enrollment });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Admin Route: Manually grant course access by student email
-export const manualEnroll = async (req, res) => {
+// Grant free access to a batch
+export const enrollUserManually = async (req, res) => {
   try {
     const { email, courseId } = req.body;
 
-    // 1. Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "No user found with this email" });
+    if (!email || !courseId) {
+      return res.status(400).json({ message: "Email and course ID are required." });
     }
 
-    // 2. Find course by ID
+    // Find student by email
+    const student = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!student) {
+      return res.status(404).json({ message: "No user account found with this email." });
+    }
+
+    // Verify course exists
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: "Course not found" });
+      return res.status(404).json({ message: "Course batch not found." });
     }
 
-    // 3. Check if already enrolled
-    const existingEnrollment = await Enrollment.findOne({
-      student: user._id,
+    // Check if already enrolled (using 'student' to match your schema)
+    const existing = await Enrollment.findOne({
+      student: student._id,
       course: courseId,
     });
 
-    if (existingEnrollment) {
-      return res.status(400).json({ message: "User is already enrolled in this course" });
+    if (existing) {
+      return res.status(400).json({ message: "Student is already enrolled in this batch." });
     }
 
-    // 4. Create enrollment record
+    // Create enrollment record
     const enrollment = await Enrollment.create({
-      student: user._id,
+      student: student._id,
       course: courseId,
       paymentStatus: "completed",
-      amountPaid: 0,
     });
 
     res.status(201).json({
-      message: `Access granted to ${user.name || user.email} successfully!`,
+      success: true,
+      message: `Access granted successfully to ${student.name || email}`,
       enrollment,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message || "Failed to grant access" });
+    res.status(500).json({ message: err.message });
   }
 };
