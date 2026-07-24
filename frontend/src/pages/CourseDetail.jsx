@@ -50,16 +50,36 @@ const CourseDetail = () => {
       });
   };
 
+  // 1. Fetch Course Info and Verify Enrollment explicitly
   useEffect(() => {
     // Fetch course details
     api.get(`/courses/${id}`)
       .then((res) => {
-        setCourse(res.data.course);
-        setEnrolled(res.data.isEnrolled);
+        setCourse(res.data.course || res.data);
       })
       .catch((err) => console.error("Failed to load course details", err));
 
+    // ALWAYS check enrollment from the dedicated backend endpoint we just fixed
+    if (user?.role === "student") {
+      api.get(`/enrollments/check/${id}`)
+        .then((res) => {
+          const hasAccess = res.data.isEnrolled || res.data.enrolled;
+          setEnrolled(hasAccess);
+          if (hasAccess) {
+            setAccessDeniedMessage("");
+          }
+        })
+        .catch((err) => console.error("Failed to verify enrollment", err));
+    } else if (user) {
+      // Admins and Instructors automatically have access
+      setEnrolled(true);
+    }
+  }, [id, user]);
+
+  // 2. Fetch locked materials whenever enrollment state changes
+  useEffect(() => {
     fetchCourseData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, enrolled]);
 
   const handleEnroll = async () => {
