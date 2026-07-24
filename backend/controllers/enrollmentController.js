@@ -49,3 +49,6 @@ export const enrollUserManually = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Export alias so the router can find 'manualEnroll' when the UI calls /manual
+export const manualEnroll = enrollUserManually;
