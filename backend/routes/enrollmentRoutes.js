@@ -10,12 +10,13 @@ import { protect, restrictTo } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Student enrollment routes
+// === STUDENT ENROLLMENT ROUTES ===
 router.post("/", protect, restrictTo("student"), enrollInCourse);
 router.get("/mine", protect, restrictTo("student"), getMyEnrollments);
 router.get("/check/:courseId", protect, checkEnrollment);
 
-// Admin & Instructor route to manually grant free access
+// === ADMIN & INSTRUCTOR MANUAL ACCESS ROUTES ===
+// Allows both admins and instructors to grant free batch access to students
 router.post("/manual", protect, restrictTo("admin", "instructor"), manualEnroll);
 router.post("/grant-access", protect, restrictTo("admin", "instructor"), enrollUserManually);
 
