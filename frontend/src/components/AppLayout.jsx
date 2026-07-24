@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import Footer from "./Footer.jsx"; // <-- 1. Import your Footer component
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -133,10 +134,10 @@ const AppLayout = () => {
       </header>
 
       {/* MAIN CONTAINER (SIDEBAR + PAGE CONTENT) */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* COLLAPSIBLE SIDEBAR */}
         <aside
-          className={`bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col ${
+          className={`bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col h-full overflow-y-auto ${
             isSidebarOpen ? "w-64" : "w-16"
           }`}
         >
@@ -172,9 +173,17 @@ const AppLayout = () => {
           )}
         </aside>
 
-        {/* DYNAMIC PAGE CONTENT AREA */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          <Outlet />
+        {/* DYNAMIC PAGE CONTENT AREA WITH FOOTER */}
+        <main className="flex-1 min-w-0 overflow-y-auto flex flex-col justify-between h-full bg-slate-50">
+          <div className="flex-1">
+             {/* 2. Page Content renders here */}
+            <Outlet />
+          </div>
+          
+          {/* 3. Footer renders beautifully at the bottom of the content window */}
+          <div className="w-full">
+            <Footer />
+          </div>
         </main>
       </div>
     </div>

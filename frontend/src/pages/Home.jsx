@@ -1,31 +1,31 @@
 import { Link } from "react-router-dom";
 
 const Home = () => (
-  <>
-    {/* Hero: ruled-paper background ties directly to the notes/DPP identity */}
-    <section className="bg-ruled-paper">
-      <div className="max-w-6xl mx-auto px-6 pt-20 pb-24">
-        <span className="font-mono text-xs uppercase tracking-widest text-rust">
+  <div className="bg-slate-50 text-slate-800 min-h-screen">
+    {/* Hero: Ruled paper background styling */}
+    <section className="bg-white border-b border-slate-200/80">
+      <div className="max-w-6xl mx-auto px-6 pt-16 pb-20">
+        <span className="font-mono text-xs uppercase tracking-widest text-emerald-600 font-semibold">
           Nursing made simple
         </span>
-        <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-[1.05] mt-4 max-w-3xl">
+        <h1 className="text-4xl sm:text-6xl font-extrabold text-slate-900 leading-[1.1] mt-4 max-w-3xl tracking-tight">
           Live classes, notes and DPPs —
-          <span className="text-marigold"> built for nursing students.</span>
+          <span className="text-emerald-500"> built for nursing students.</span>
         </h1>
-        <p className="text-lg text-ink/70 mt-6 max-w-xl">
+        <p className="text-base sm:text-lg text-slate-600 mt-6 max-w-xl leading-relaxed">
           Nursita brings your faculty's live class, the recording, the day's notes and practice
           problems together — so revising Anatomy, Pharmacology or Med-Surg is one tab, not five.
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
             to="/courses"
-            className="px-6 py-3 rounded-lg bg-ink text-paper font-medium hover:bg-marigold hover:text-ink transition-colors"
+            className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all shadow-sm"
           >
             Browse courses
           </Link>
           <Link
             to="/register"
-            className="px-6 py-3 rounded-lg border border-ink font-medium hover:bg-white transition-colors"
+            className="px-6 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 font-bold text-sm hover:bg-slate-100 transition-all"
           >
             Create free account
           </Link>
@@ -33,9 +33,11 @@ const Home = () => (
       </div>
     </section>
 
-    {/* How it works — sequence, so numbering is earned here */}
-    <section className="max-w-6xl mx-auto px-6 py-20">
-      <h2 className="font-display text-3xl font-semibold mb-10">How a class day works</h2>
+    {/* How it works */}
+    <section className="max-w-6xl mx-auto px-6 py-16">
+      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-10">
+        How a class day works
+      </h2>
       <div className="grid sm:grid-cols-3 gap-8">
         {[
           {
@@ -54,27 +56,32 @@ const Home = () => (
             copy: "Download the day's notes and Daily Practice Problems right after class.",
           },
         ].map((step) => (
-          <div key={step.n} className="margin-rule">
-            <span className="font-mono text-sm text-rust">{step.n}</span>
-            <h3 className="font-display text-xl font-semibold mt-2">{step.title}</h3>
-            <p className="text-ink/60 mt-2 text-sm leading-relaxed">{step.copy}</p>
+          <div
+            key={step.n}
+            className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all"
+          >
+            <span className="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              {step.n}
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mt-4">{step.title}</h3>
+            <p className="text-slate-500 mt-2 text-sm leading-relaxed">{step.copy}</p>
           </div>
         ))}
       </div>
     </section>
 
-    {/* Founder */}
-    <section className="max-w-6xl mx-auto px-6 pb-24">
-      <div className="rounded-2xl border border-rule bg-white p-8 sm:p-10 flex flex-col sm:flex-row gap-8 items-start sm:items-center">
-        <div className="w-20 h-20 rounded-full bg-ink flex items-center justify-center shrink-0">
-          <span className="font-display text-2xl font-semibold text-marigold">VR</span>
+    {/* Founder Section */}
+    <section className="max-w-6xl mx-auto px-6 pb-20">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-8 sm:p-10 flex flex-col sm:flex-row gap-8 items-start sm:items-center shadow-sm">
+        <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center shrink-0 shadow-md">
+          <span className="text-2xl font-black text-emerald-400">VR</span>
         </div>
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-teal">
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
             Founder &amp; Lead Instructor
           </span>
-          <h2 className="font-display text-2xl font-semibold mt-1">Vineeta Rani</h2>
-          <p className="text-ink/60 mt-2 max-w-xl text-sm leading-relaxed">
+          <h2 className="text-2xl font-extrabold text-slate-900 mt-1">Vineeta Rani</h2>
+          <p className="text-slate-600 mt-2 max-w-xl text-sm leading-relaxed">
             Vineeta started Nursita on a simple idea: a nursing student revising at 11pm
             shouldn't need five different apps to find today's class, its notes and the practice
             problems that go with it. She teaches live on the platform every week.
@@ -82,7 +89,7 @@ const Home = () => (
         </div>
       </div>
     </section>
-  </>
+  </div>
 );
 
 export default Home;
