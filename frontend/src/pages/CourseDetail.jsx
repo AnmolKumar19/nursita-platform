@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import ChapterAccordion from "../components/ChapterAccordion.jsx";
 import ChapterManagement from "../components/ChapterManagement.jsx";
 import UploadModal from "../components/UploadModal.jsx";
+import GrantAccessModal from "../components/GrantAccessModal.jsx";
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -18,7 +19,7 @@ const CourseDetail = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [accessDeniedMessage, setAccessDeniedMessage] = useState("");
 
-  // Modals state for instructors
+  // Modals state for instructors/admins
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -182,18 +183,21 @@ const CourseDetail = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Instructor Actions */}
+              {/* Instructor / Admin Actions */}
               {isCourseOwner && (
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Grant Access Modal Component */}
+                  <GrantAccessModal courseId={id} courseName={course.title} />
+
                   <button
                     onClick={() => setShowChapterModal(true)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-400 border border-teal-500/30 text-sm font-semibold transition-colors"
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-400 border border-teal-500/30 text-xs font-semibold transition-colors"
                   >
                     ⚙️ Manage Chapters
                   </button>
                   <button
                     onClick={() => setShowUploadModal(true)}
-                    className="px-5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-sm font-bold shadow-lg shadow-teal-500/10 transition-colors"
+                    className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold shadow-lg shadow-teal-500/10 transition-colors"
                   >
                     ＋ Upload Material
                   </button>
@@ -233,7 +237,7 @@ const CourseDetail = () => {
       {/* Main Workspace Area */}
       <div className="max-w-6xl mx-auto px-6 mt-8">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 p-1.5 bg-slate-200/60 rounded-xl max-w-fit mb-8 border border-slate-300/50">
+        <div className="flex gap-2 p-1.5 bg-slate-200/60 rounded-xl max-w-fit mb-8 border border-slate-300/50 overflow-x-auto">
           {[
             { key: "curriculum", label: "Chapters & Curriculum", count: chapters.length },
             { key: "classes", label: "All Lectures", count: classes.length },
@@ -243,7 +247,7 @@ const CourseDetail = () => {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center gap-2 ${
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center gap-2 whitespace-nowrap ${
                 tab === t.key
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
