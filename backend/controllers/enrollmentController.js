@@ -1,6 +1,7 @@
 import Enrollment from "../models/Enrollment.js";
 import Course from "../models/Course.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 
 // Standard Student Enrollment
 export const enrollInCourse = async (req, res) => {
@@ -12,7 +13,12 @@ export const enrollInCourse = async (req, res) => {
     const existing = await Enrollment.findOne({ student: req.user._id, course: courseId });
     if (existing) return res.status(409).json({ message: "Already enrolled" });
 
-    const enrollment = await Enrollment.create({ student: req.user._id, course: courseId });
+    const enrollment = await Enrollment.create({
+      student: req.user._id,
+      course: courseId,
+      paymentStatus: "completed",
+    });
+
     res.status(201).json(enrollment);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -35,11 +41,31 @@ export const getMyEnrollments = async (req, res) => {
 // Check if Logged-In Student is Enrolled
 export const checkEnrollment = async (req, res) => {
   try {
+    const { courseId } = req.params;
+
+    // Safely cast string IDs to Mongoose ObjectIds
+    const studentId = mongoose.Types.ObjectId.isValid(req.user._id)
+      ? new mongoose.Types.ObjectId(req.user._id)
+      : req.user._id;
+
+    const validCourseId = mongoose.Types.ObjectId.isValid(courseId)
+      ? new mongoose.Types.ObjectId(courseId)
+      : courseId;
+
     const enrollment = await Enrollment.findOne({
-      student: req.user._id,
-      course: req.params.courseId,
+      student: studentId,
+      course: validCourseId,
     });
-    res.json({ enrolled: !!enrollment });
+
+    const hasAccess = !!enrollment;
+
+    // Return all common status flag names for complete frontend compatibility
+    res.status(200).json({
+      enrolled: hasAccess,
+      isEnrolled: hasAccess,
+      isPaid: hasAccess,
+      enrollment: enrollment || null,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
